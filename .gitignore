@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+.Python
+env/
+.venv/
+
+# Environment files (contain secrets)
+.env
+backend/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+out/
+dist/
+*.vsix
+
+# Vercel
+.vercel
+
+# Task data (local only)
+data/
+tasks/archive/
+tasks/.processed
+
+# Logs
+*.log

@@ -1,0 +1,21 @@
+{
+  "id": "example-001",
+  "type": "copy_change",
+  "description": "Change hero CTA to 'Book a Free Audit'",
+  "scope": ["app/components/Hero.tsx"],
+  "rules": [
+    "Do not change layout",
+    "Do not touch styles",
+    "Only modify the CTA button text",
+    "Preserve all existing functionality"
+  ],
+  "auto_commit": true,
+  "status": "pending",
+  "created_at": "2026-01-20T10:00:00Z",
+  "source": {
+    "message": "Change the hero button to say Book a Free Audit",
+    "sender": "whatsapp:+1234567890",
+    "timestamp": "2026-01-20T10:00:00Z"
+  },
+  "result": null
+}

@@ -1,0 +1,124 @@
+{
+  "name": "whatsapp-copilot-automation",
+  "displayName": "WhatsApp Copilot Automation",
+  "description": "Watches for CHANGE.json task files and invokes Copilot to apply changes automatically",
+  "version": "1.0.0",
+  "publisher": "automation",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "whatsappAutomation.startWatching",
+        "title": "Start Task Watcher",
+        "category": "WhatsApp Automation"
+      },
+      {
+        "command": "whatsappAutomation.stopWatching",
+        "title": "Stop Task Watcher",
+        "category": "WhatsApp Automation"
+      },
+      {
+        "command": "whatsappAutomation.processTask",
+        "title": "Process Task File",
+        "category": "WhatsApp Automation"
+      },
+      {
+        "command": "whatsappAutomation.showTasks",
+        "title": "Show Pending Tasks",
+        "category": "WhatsApp Automation"
+      },
+      {
+        "command": "whatsappAutomation.configureTasksDir",
+        "title": "Configure Tasks Directory",
+        "category": "WhatsApp Automation"
+      }
+    ],
+    "configuration": {
+      "title": "WhatsApp Copilot Automation",
+      "properties": {
+        "whatsappAutomation.tasksDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the directory containing CHANGE.json task files"
+        },
+        "whatsappAutomation.autoCommit": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically commit and push changes for safe task types"
+        },
+        "whatsappAutomation.webhookUrl": {
+          "type": "string",
+          "default": "http://localhost:8000/webhook/task-completed",
+          "description": "URL to notify when a task is completed"
+        },
+        "whatsappAutomation.safeFilePatterns": {
+          "type": "array",
+          "default": [
+            "*.tsx",
+            "*.ts",
+            "*.css",
+            "*.json",
+            "*.md"
+          ],
+          "description": "File patterns that are safe for auto-commit"
+        },
+        "whatsappAutomation.maxDiffLines": {
+          "type": "number",
+          "default": 50,
+          "description": "Maximum number of changed lines for auto-commit"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "whatsapp-automation",
+          "title": "WhatsApp Automation",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "whatsapp-automation": [
+        {
+          "id": "whatsappAutomation.tasksView",
+          "name": "Tasks"
+        },
+        {
+          "id": "whatsappAutomation.historyView",
+          "name": "History"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.x",
+    "@typescript-eslint/parser": "^6.x",
+    "eslint": "^8.x",
+    "typescript": "^5.x"
+  },
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "minimatch": "^9.0.3",
+    "simple-git": "^3.22.0"
+  }
+}

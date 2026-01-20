@@ -1,0 +1,21 @@
+{
+  "id": "example-002",
+  "type": "seo_update",
+  "description": "Update page title to 'Premium Marketing Services | Your Brand'",
+  "scope": ["app/layout.tsx"],
+  "rules": [
+    "Only modify the title and meta tags",
+    "Do not change page content",
+    "Keep valid HTML structure",
+    "Preserve all existing metadata not mentioned"
+  ],
+  "auto_commit": true,
+  "status": "pending",
+  "created_at": "2026-01-20T11:00:00Z",
+  "source": {
+    "message": "Update the SEO title to Premium Marketing Services Your Brand",
+    "sender": "whatsapp:+1234567890",
+    "timestamp": "2026-01-20T11:00:00Z"
+  },
+  "result": null
+}
