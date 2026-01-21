@@ -43,11 +43,10 @@ class TaskRequest(BaseModel):
     auto_commit: bool = True
 
 
-async def write_task_to_github(task: dict) -> bool:
-    """Write task file to GitHub repo"""
+async def write_task_to_github(task: dict) -> tuple[bool, str]:
+    """Write task file to GitHub repo. Returns (success, error_message)"""
     if not GITHUB_TOKEN:
-        print("No GITHUB_TOKEN set")
-        return False
+        return False, "No GITHUB_TOKEN set"
     
     try:
         repo = GITHUB_REPO
@@ -71,14 +70,11 @@ async def write_task_to_github(task: dict) -> bool:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.put(url, headers=headers, json=data)
             if resp.status_code in [200, 201]:
-                print(f"Task written to GitHub: {file_path}")
-                return True
+                return True, "Success"
             else:
-                print(f"GitHub API error: {resp.status_code} - {resp.text}")
-                return False
+                return False, f"GitHub API error {resp.status_code}: {resp.text[:200]}"
     except Exception as e:
-        print(f"Error writing to GitHub: {e}")
-        return False
+        return False, f"Exception: {str(e)}"
 
 
 def parse_intent(message: str) -> dict:
@@ -150,10 +146,10 @@ async def whatsapp_webhook(
         tasks_store[task_id] = task
         
         # Write task to GitHub
-        github_success = await write_task_to_github(task)
+        github_success, github_error = await write_task_to_github(task)
         
         status_emoji = "✅" if github_success else "⚠️"
-        github_status = "Synced to GitHub" if github_success else "Local only"
+        github_status = "Synced to GitHub" if github_success else f"Local only ({github_error[:50]})"
         
         response.message(
             f"{status_emoji} Task created!\n\n"
@@ -219,10 +215,11 @@ async def test_github_write():
         "created_at": datetime.utcnow().isoformat()
     }
     
-    success = await write_task_to_github(test_task)
+    success, error_msg = await write_task_to_github(test_task)
     
     return {
         "success": success,
+        "error": error_msg,
         "task_id": test_task["id"],
         "github_token_set": bool(GITHUB_TOKEN),
         "github_token_prefix": GITHUB_TOKEN[:20] + "..." if GITHUB_TOKEN else None,
