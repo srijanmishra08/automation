@@ -1,0 +1,11 @@
+{
+  "id": "test-886f",
+  "type": "test",
+  "description": "Test task from API",
+  "scope": [
+    "test.tsx"
+  ],
+  "rules": [],
+  "status": "test",
+  "created_at": "2026-01-21T05:21:05.606051"
+}
