@@ -1,0 +1,19 @@
+{
+  "id": "5304cdeb",
+  "type": "copy_change",
+  "description": "Replace Ad directors text to creative team in sphereco_production",
+  "scope": [
+    "index.html"
+  ],
+  "target_repo": "sphereco_production",
+  "rules": [
+    "Do not change layout or structure",
+    "Only modify what is explicitly requested",
+    "Preserve existing functionality",
+    "Keep the same code style"
+  ],
+  "auto_commit": true,
+  "status": "pending",
+  "created_at": "2026-01-21T11:18:14.252372",
+  "sender": "whatsapp:+917879722663"
+}
