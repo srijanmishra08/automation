@@ -49,32 +49,36 @@ async def write_task_to_github(task: dict) -> bool:
         print("No GITHUB_TOKEN set")
         return False
     
-    repo = GITHUB_REPO
-    file_path = f"tasks/CHANGE-{task['id']}.json"
-    content = json.dumps(task, indent=2)
-    content_b64 = base64.b64encode(content.encode()).decode()
-    
-    url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
-    headers = {
-        "Authorization": f"Bearer {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json",
-        "X-GitHub-Api-Version": "2022-11-28"
-    }
-    
-    data = {
-        "message": f"📋 New task: {task['description'][:50]}",
-        "content": content_b64,
-        "branch": "main"
-    }
-    
-    async with httpx.AsyncClient() as client:
-        resp = await client.put(url, headers=headers, json=data)
-        if resp.status_code in [200, 201]:
-            print(f"Task written to GitHub: {file_path}")
-            return True
-        else:
-            print(f"GitHub API error: {resp.status_code} - {resp.text}")
-            return False
+    try:
+        repo = GITHUB_REPO
+        file_path = f"tasks/CHANGE-{task['id']}.json"
+        content = json.dumps(task, indent=2)
+        content_b64 = base64.b64encode(content.encode()).decode()
+        
+        url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
+        headers = {
+            "Authorization": f"Bearer {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github.v3+json",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+        
+        data = {
+            "message": f"📋 New task: {task['description'][:50]}",
+            "content": content_b64,
+            "branch": "main"
+        }
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.put(url, headers=headers, json=data)
+            if resp.status_code in [200, 201]:
+                print(f"Task written to GitHub: {file_path}")
+                return True
+            else:
+                print(f"GitHub API error: {resp.status_code} - {resp.text}")
+                return False
+    except Exception as e:
+        print(f"Error writing to GitHub: {e}")
+        return False
 
 
 def parse_intent(message: str) -> dict:
@@ -117,54 +121,54 @@ async def whatsapp_webhook(
     """Twilio WhatsApp webhook"""
     try:
         from twilio.twiml.messaging_response import MessagingResponse
-    except ImportError:
-        return Response(
-            content="<Response><Message>Error: Twilio not installed</Message></Response>",
-            media_type="application/xml"
+        
+        response = MessagingResponse()
+        
+        if not Body:
+            response.message("Please send a message describing the change you want.")
+            return Response(content=str(response), media_type="application/xml")
+        
+        # Store message
+        messages_store.append({
+            "sender": From,
+            "content": Body,
+            "time": datetime.utcnow().isoformat()
+        })
+        
+        # Parse and create task
+        intent = parse_intent(Body)
+        task_id = str(uuid.uuid4())[:8]
+        
+        task = {
+            "id": task_id,
+            **intent,
+            "status": "pending",
+            "created_at": datetime.utcnow().isoformat(),
+            "sender": From
+        }
+        tasks_store[task_id] = task
+        
+        # Write task to GitHub
+        github_success = await write_task_to_github(task)
+        
+        status_emoji = "✅" if github_success else "⚠️"
+        github_status = "Synced to GitHub" if github_success else "Local only"
+        
+        response.message(
+            f"{status_emoji} Task created!\n\n"
+            f"📋 {task['type']}\n"
+            f"📝 {task['description'][:100]}\n"
+            f"📁 {', '.join(task['scope'])}\n"
+            f"🆔 {task_id}\n\n"
+            f"📌 {github_status}"
         )
-    
-    response = MessagingResponse()
-    
-    if not Body:
-        response.message("Please send a message describing the change you want.")
+        
         return Response(content=str(response), media_type="application/xml")
-    
-    # Store message
-    messages_store.append({
-        "sender": From,
-        "content": Body,
-        "time": datetime.utcnow().isoformat()
-    })
-    
-    # Parse and create task
-    intent = parse_intent(Body)
-    task_id = str(uuid.uuid4())[:8]
-    
-    task = {
-        "id": task_id,
-        **intent,
-        "status": "pending",
-        "created_at": datetime.utcnow().isoformat(),
-        "sender": From
-    }
-    tasks_store[task_id] = task
-    
-    # Write task to GitHub
-    github_success = await write_task_to_github(task)
-    
-    status_emoji = "✅" if github_success else "⚠️"
-    github_status = "Synced to GitHub" if github_success else "Local only (GitHub not configured)"
-    
-    response.message(
-        f"{status_emoji} Task created!\n\n"
-        f"📋 {task['type']}\n"
-        f"📝 {task['description'][:100]}\n"
-        f"📁 {', '.join(task['scope'])}\n"
-        f"🆔 {task_id}\n\n"
-        f"📌 {github_status}"
-    )
-    
-    return Response(content=str(response), media_type="application/xml")
+        
+    except Exception as e:
+        # Return error as TwiML so Twilio doesn't retry
+        error_xml = f'<Response><Message>Error: {str(e)[:100]}</Message></Response>'
+        return Response(content=error_xml, media_type="application/xml")
 
 
 @app.post("/tasks/create")
