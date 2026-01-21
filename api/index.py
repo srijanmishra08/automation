@@ -78,24 +78,83 @@ async def write_task_to_github(task: dict) -> tuple[bool, str]:
 
 
 def parse_intent(message: str) -> dict:
-    """Simple intent parsing"""
+    """
+    Simple rule-based intent parsing.
+    
+    NOTE: This is a SIMPLE RULE-BASED parser, NOT an AI model.
+    For production, you could integrate:
+    - OpenAI GPT-4 for better understanding
+    - Claude API for structured extraction
+    - Custom fine-tuned model
+    
+    Supports patterns like:
+    - "change hero text to X"
+    - "update footer in my-repo"
+    - "modify navbar color to blue"
+    """
     msg = message.lower()
+    original_msg = message
     
-    task_type = "copy_change" if any(w in msg for w in ["change", "update", "modify", "text", "button"]) else "component_edit"
+    # Detect task type
+    if any(w in msg for w in ["change", "update", "modify", "text", "copy", "title", "heading"]):
+        task_type = "copy_change"
+    elif any(w in msg for w in ["color", "background", "style", "font", "size"]):
+        task_type = "style_change"
+    elif any(w in msg for w in ["add", "create", "new"]):
+        task_type = "component_add"
+    elif any(w in msg for w in ["remove", "delete", "hide"]):
+        task_type = "component_remove"
+    else:
+        task_type = "general_edit"
     
-    scope = ["app/components/Hero.tsx"]
-    for component in ["header", "footer", "nav", "hero", "cta"]:
-        if component in msg:
-            scope = [f"app/components/{component.title()}.tsx"]
+    # Detect target component
+    scope = ["app/components/Hero.tsx"]  # default
+    component_map = {
+        "header": "app/components/Header.tsx",
+        "footer": "app/components/Footer.tsx",
+        "nav": "app/components/Navbar.tsx",
+        "navbar": "app/components/Navbar.tsx",
+        "hero": "app/components/Hero.tsx",
+        "cta": "app/components/CTA.tsx",
+        "button": "app/components/Button.tsx",
+        "form": "app/components/ContactForm.tsx",
+        "pricing": "app/components/Pricing.tsx",
+        "features": "app/components/Features.tsx",
+    }
+    
+    for keyword, file_path in component_map.items():
+        if keyword in msg:
+            scope = [file_path]
             break
     
-    return {
+    # Detect target repo (pattern: "in repo-name" or "in my-project")
+    import re
+    target_repo = None
+    repo_match = re.search(r'\bin\s+([a-zA-Z0-9_-]+(?:/[a-zA-Z0-9_-]+)?)\s*$', original_msg)
+    if repo_match:
+        target_repo = repo_match.group(1)
+    
+    # Determine if auto-commit is safe
+    safe_types = ["copy_change", "style_change"]
+    auto_commit = task_type in safe_types
+    
+    result = {
         "type": task_type,
-        "description": message,
+        "description": original_msg,
         "scope": scope,
-        "rules": ["Do not change layout", "Only modify what is requested"],
-        "auto_commit": True
+        "rules": [
+            "Do not change layout or structure",
+            "Only modify what is explicitly requested",
+            "Preserve existing functionality",
+            "Keep the same code style"
+        ],
+        "auto_commit": auto_commit
     }
+    
+    if target_repo:
+        result["target_repo"] = target_repo
+    
+    return result
 
 
 @app.get("/")
