@@ -109,6 +109,7 @@ def root():
         "service": "WhatsApp Automation API",
         "time": datetime.utcnow().isoformat(),
         "github_connected": bool(GITHUB_TOKEN),
+        "github_token_length": len(GITHUB_TOKEN) if GITHUB_TOKEN else 0,
         "repo": GITHUB_REPO
     }
 
