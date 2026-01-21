@@ -204,3 +204,27 @@ def get_task(task_id: str):
 @app.get("/messages")
 def list_messages():
     return {"messages": messages_store[-50:], "count": len(messages_store)}
+
+
+@app.get("/test-github")
+async def test_github_write():
+    """Test endpoint to verify GitHub integration"""
+    test_task = {
+        "id": "test-" + str(uuid.uuid4())[:4],
+        "type": "test",
+        "description": "Test task from API",
+        "scope": ["test.tsx"],
+        "rules": [],
+        "status": "test",
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    success = await write_task_to_github(test_task)
+    
+    return {
+        "success": success,
+        "task_id": test_task["id"],
+        "github_token_set": bool(GITHUB_TOKEN),
+        "github_token_prefix": GITHUB_TOKEN[:20] + "..." if GITHUB_TOKEN else None,
+        "repo": GITHUB_REPO
+    }
