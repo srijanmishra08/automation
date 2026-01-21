@@ -1,0 +1,19 @@
+{
+  "id": "fe0d1806",
+  "type": "copy_change",
+  "description": "Change the MOQ of cattle feed to 25 tonne in the catalogue section in the sahaj-agro-web",
+  "scope": [
+    "index.html"
+  ],
+  "target_repo": null,
+  "rules": [
+    "Do not change layout or structure",
+    "Only modify what is explicitly requested",
+    "Preserve existing functionality",
+    "Keep the same code style"
+  ],
+  "auto_commit": true,
+  "status": "pending",
+  "created_at": "2026-01-21T11:49:56.479145",
+  "sender": "whatsapp:+917879722663"
+}
