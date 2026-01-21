@@ -92,6 +92,7 @@ def parse_intent(message: str) -> dict:
     - "update footer in my-repo"
     - "modify navbar color to blue"
     """
+    import re
     msg = message.lower()
     original_msg = message
     
@@ -107,32 +108,35 @@ def parse_intent(message: str) -> dict:
     else:
         task_type = "general_edit"
     
-    # Detect target component
-    scope = ["app/components/Hero.tsx"]  # default
-    component_map = {
-        "header": "app/components/Header.tsx",
-        "footer": "app/components/Footer.tsx",
-        "nav": "app/components/Navbar.tsx",
-        "navbar": "app/components/Navbar.tsx",
-        "hero": "app/components/Hero.tsx",
-        "cta": "app/components/CTA.tsx",
-        "button": "app/components/Button.tsx",
-        "form": "app/components/ContactForm.tsx",
-        "pricing": "app/components/Pricing.tsx",
-        "features": "app/components/Features.tsx",
-    }
-    
-    for keyword, file_path in component_map.items():
-        if keyword in msg:
-            scope = [file_path]
-            break
-    
-    # Detect target repo (pattern: "in repo-name" or "in my-project")
-    import re
+    # Detect target repo FIRST (pattern: "in repo-name" at the end)
     target_repo = None
-    repo_match = re.search(r'\bin\s+([a-zA-Z0-9_-]+(?:/[a-zA-Z0-9_-]+)?)\s*$', original_msg)
+    repo_match = re.search(r'\bin\s+([a-zA-Z0-9_-]+)\s*$', original_msg, re.IGNORECASE)
     if repo_match:
         target_repo = repo_match.group(1)
+    
+    # For sphereco_production - it's a single HTML file
+    if target_repo and "sphereco" in target_repo.lower():
+        scope = ["index.html"]
+    else:
+        # Detect target component for React/Next.js projects
+        scope = ["index.html"]  # default for simple sites
+        component_map = {
+            "header": "app/components/Header.tsx",
+            "footer": "app/components/Footer.tsx",
+            "nav": "app/components/Navbar.tsx",
+            "navbar": "app/components/Navbar.tsx",
+            "hero": "app/components/Hero.tsx",
+            "cta": "app/components/CTA.tsx",
+            "button": "app/components/Button.tsx",
+            "form": "app/components/ContactForm.tsx",
+            "pricing": "app/components/Pricing.tsx",
+            "features": "app/components/Features.tsx",
+        }
+        
+        for keyword, file_path in component_map.items():
+            if keyword in msg:
+                scope = [file_path]
+                break
     
     # Determine if auto-commit is safe
     safe_types = ["copy_change", "style_change"]
@@ -142,6 +146,7 @@ def parse_intent(message: str) -> dict:
         "type": task_type,
         "description": original_msg,
         "scope": scope,
+        "target_repo": target_repo,
         "rules": [
             "Do not change layout or structure",
             "Only modify what is explicitly requested",
